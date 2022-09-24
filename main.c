@@ -1,6 +1,10 @@
-#include <stdio.h>
+#include "core/bitboard/bitboard.h"
+#include "core/board/board.h"
 
 int main() {
-    printf("Hello, World!\n");
+    Board *board = board_default();
+
+    board_print(board);
+
     return 0;
 }
