@@ -42,3 +42,15 @@ void board_print(Board *board) {
     printf("   %s", "  a   b   c   d   e   f   g   h  \n");
     printf("\n");
 }
+
+Bitboard board_us_bb(Board *board) {
+    return board->bbs[board->turn];
+}
+
+Bitboard board_them_bb(Board *board) {
+    return board->bbs[board->turn ^ 1];
+}
+
+Bitboard board_empty_bb(Board *board) {
+    return ~(board->bbs[WHITE] | board->bbs[BLACK]);
+}

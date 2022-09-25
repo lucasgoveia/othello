@@ -12,4 +12,6 @@ typedef enum {
 
 const char PLAYER_DISPLAY[2];
 
+Player player_other(Player player);
+
 #endif //OTHELLO_PLAYER_H

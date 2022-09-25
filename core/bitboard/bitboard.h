@@ -15,6 +15,10 @@ typedef uint64_t Bitboard;
 
 void bitboard_print(Bitboard bitboard);
 
-uint8_t bitboard_scan_forward(Bitboard bitboard);
+uint8_t bitboard_scan_forward(Bitboard bb);
+
+uint8_t bitboard_pop_lsb(Bitboard *bb);
+
+uint8_t bitboard_popcnt(Bitboard bb);
 
 #endif //OTHELLO_BITBOARD_H

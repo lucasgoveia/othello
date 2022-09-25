@@ -39,6 +39,21 @@ void bitboard_print(Bitboard bitboard) {
     printf("\n");
 }
 
-uint8_t bitboard_scan_forward(Bitboard bitboard) {
-    return DEBRUIJ_T[((bitboard ^ (bitboard - 1)) * DEBRUIJ_M) >> 58];
+uint8_t bitboard_scan_forward(Bitboard bb) {
+    return DEBRUIJ_T[((bb ^ (bb - 1)) * DEBRUIJ_M) >> 58];
+}
+
+uint8_t bitboard_pop_lsb(Bitboard *bb) {
+    uint8_t index = bitboard_scan_forward(*bb);
+    *bb &= *bb - 1;
+    return index;
+}
+
+uint8_t bitboard_popcnt(Bitboard bb) {
+    uint8_t count = 0;
+    while (bb) {
+        bb &= (bb - 1);
+        count++;
+    }
+    return count;
 }
