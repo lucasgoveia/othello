@@ -47,6 +47,9 @@ int alphabeta(SearchInfo *sinfo, int alpha, int beta, int depth) {
             }
 
             if (score >= beta) {
+                free(mv_list->moves);
+                free(mv_list);
+
                 return beta;
             }
         }
