@@ -49,6 +49,9 @@ Bitboard board_them_bb(Board *board);
 Bitboard board_empty_bb(Board *board);
 
 MoveList *board_legal_moves(Board *board);
-Board *board_apply_move(Board *board, Move mv);
+void board_apply_move(Board *board, Move mv);
+void board_undo_move(Board *board);
+
+Board *board_copy(Board *board);
 
 #endif //OTHELLO_BOARD_H

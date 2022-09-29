@@ -123,17 +123,28 @@ MoveList *board_legal_moves(Board *board) {
     return mv_list;
 }
 
-Board *board_apply_move(Board *board, Move mv) {
+Board *board_copy(Board *board) {
+    Board *new_board = (Board *) malloc(sizeof(Board));
+
+    new_board->prev = board->prev;
+    new_board->turn = board->turn;
+    new_board->bbs[WHITE] = board->bbs[WHITE];
+    new_board->bbs[BLACK] = board->bbs[BLACK];
+    new_board->pass_move_count = board->pass_move_count;
+
+    return new_board;
+}
+
+void board_apply_move(Board *board, Move mv) {
     if (mv.code == PASS_MOVE_CODE) {
-        Board *new_board = (Board *) malloc(sizeof(Board));
+        Board *copy = board_copy(board);
 
-        new_board->prev = board;
-        new_board->turn = board->turn;
-        new_board->bbs[WHITE] = board->bbs[WHITE];
-        new_board->bbs[BLACK] = board->bbs[BLACK];
-        new_board->pass_move_count = board->pass_move_count + 1;
-
-        return new_board;
+        board->prev = copy;
+        board->turn = player_other(board->turn);
+        board->bbs[WHITE] = board->bbs[WHITE];
+        board->bbs[BLACK] = board->bbs[BLACK];
+        board->pass_move_count = board->pass_move_count + 1;
+        return;
     }
 
     Bitboard us = board_us_bb(board);
@@ -153,17 +164,25 @@ Board *board_apply_move(Board *board, Move mv) {
     us |= flipped_stones | bitmove;
     them &= ~flipped_stones;
 
-    Board *new_board = (Board *) malloc(sizeof(Board));
+    Board *copy = board_copy(board);
 
-    new_board->prev = board;
-    new_board->pass_move_count = 0;
-    new_board->turn = player_other(board->turn);
-    new_board->bbs[WHITE] = board->turn == WHITE
+    board->prev = copy;
+    board->pass_move_count = 0;
+    board->turn = player_other(copy->turn);
+    board->bbs[WHITE] = copy->turn == WHITE
         ? us
         : them;
-    new_board->bbs[BLACK] = board->turn == BLACK
+    board->bbs[BLACK] = copy->turn == BLACK
         ? us
         : them;
+}
 
-    return new_board;
+void board_undo_move(Board *board) {
+    board->bbs[0] = board->prev->bbs[0];
+    board->bbs[1] = board->prev->bbs[1];
+    board->turn = board->prev->turn;
+    board->pass_move_count = board->prev->pass_move_count;
+    Board *prev = board->prev;
+    board->prev = prev->prev;
+    free(prev);
 }
