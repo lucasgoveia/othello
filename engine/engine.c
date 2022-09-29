@@ -34,7 +34,7 @@ int alphabeta(SearchInfo *sinfo, int alpha, int beta, int depth) {
         board_apply_move(sinfo->root, mv_list->moves[i]);
         sinfo->ply++;
 
-        int score = -alphabeta(sinfo, alpha, beta, depth - 1);
+        int score = -alphabeta(sinfo, -beta, -alpha, depth - 1);
 
         board_undo_move(sinfo->root);
         sinfo->ply--;
