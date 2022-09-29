@@ -103,14 +103,14 @@ MoveList *board_legal_moves(Board *board) {
     int move_index = 0;
     while (moves_bb != 0) {
         uint8_t sq = bitboard_pop_lsb(&moves_bb);
-        Move move = {.code = sq};
+        Move move = {.code = sq, .player = board->turn};
         moves[move_index] = move;
 
         move_index++;
     }
 
     if (move_index == 0) {
-        Move move = {.code = PASS_MOVE_CODE};
+        Move move = {.code = PASS_MOVE_CODE, .player = board->turn};
         moves = (Move *) malloc(sizeof(Move));
         moves[0] = move;
         movecnt++;

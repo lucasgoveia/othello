@@ -5,6 +5,9 @@
 #ifndef OTHELLO_ENGINE_H
 #define OTHELLO_ENGINE_H
 
+#include <time.h>
+#include <math.h>
+
 #include "../core/board/board.h"
 #include "eval/eval.h"
 

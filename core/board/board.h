@@ -31,6 +31,7 @@ typedef struct {
 
 typedef struct {
     uint8_t code;
+    Player player;
 } Move;
 
 typedef struct {
