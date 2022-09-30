@@ -10,6 +10,7 @@
 
 #include "../core/board/board.h"
 #include "eval/eval.h"
+#include "tt/tt.h"
 
 Move engine_search(Board *board, int depth);
 

@@ -5,6 +5,8 @@
 #include "engine.h"
 
 #define MAX_PLY 64
+#define FULL_DEPTH_MOVES 4
+#define REDUCTION_LIMIT 3
 
 typedef struct {
     Board *root;
@@ -23,7 +25,7 @@ void enable_pv_scoring(SearchInfo *sinfo, MoveList *mv_list) {
 
     for (int i = 0; i < mv_list->size; i++) {
         Move mv = mv_list->moves[i];
-        if (sinfo->pv_table[sinfo->ply][0].code == mv.code) {
+        if (sinfo->pv_table[sinfo->ply][0].stone_pos == mv.stone_pos) {
             sinfo->follow_pv = true;
             sinfo->score_pv = true;
         }
@@ -31,20 +33,20 @@ void enable_pv_scoring(SearchInfo *sinfo, MoveList *mv_list) {
 }
 
 int move_score(SearchInfo *sinfo, Move mv) {
-    if (sinfo->score_pv && sinfo->pv_table[sinfo->ply][0].code == mv.code) {
+    if (sinfo->score_pv && sinfo->pv_table[sinfo->ply][0].stone_pos == mv.stone_pos) {
         sinfo->score_pv = false;
         return 20000;
     }
 
-    if (sinfo->killers_mvs[sinfo->ply][0].code == mv.code) {
+    if (sinfo->killers_mvs[sinfo->ply][0].stone_pos == mv.stone_pos) {
         return 9000;
     }
 
-    if (sinfo->killers_mvs[sinfo->ply][1].code == mv.code) {
+    if (sinfo->killers_mvs[sinfo->ply][1].stone_pos == mv.stone_pos) {
         return 8000;
     }
 
-    return sinfo->history_mvs[mv.code][mv.player];
+    return sinfo->history_mvs[mv.stone_pos][mv.player];
 }
 
 void sort_moves(SearchInfo *sinfo, MoveList *mv_list) {
@@ -72,20 +74,60 @@ void sort_moves(SearchInfo *sinfo, MoveList *mv_list) {
     free(move_scores);
 }
 
+int score_to_tt(int score, int ply) {
+    if (score > WIN_SCORE) {
+        return score + ply;
+    } else if (score < (-WIN_SCORE)) {
+        return score - ply;
+    } else {
+        return score;
+    }
+}
+
+int score_from__tt(int score, int ply) {
+    if (score > WIN_SCORE) {
+        return score - ply;
+    } else if (score < (-WIN_SCORE)) {
+        return score + ply;
+    } else {
+        return score;
+    }
+}
+
 int alphabeta(SearchInfo *sinfo, int alpha, int beta, int depth) {
+    bool pv_node = (beta - alpha) > 1;
+
     sinfo->pv_length[sinfo->ply] = sinfo->ply;
+
+    TTEntry *tt_entry = tt_read_entry(sinfo->root->hash);
+
+    if (!pv_node && tt_entry->key == sinfo->root->hash && sinfo->ply > 0) {
+        if (tt_entry->node_type != NO_BOUND && tt_entry->depth >= depth) {
+            int score = score_from__tt(tt_entry->score, sinfo->ply);
+
+            if (tt_entry->node_type == EXACT) {
+                return score;
+            }
+            if (tt_entry->node_type == ALPHA && score <= alpha) {
+                return alpha;
+            }
+            if (tt_entry->node_type == BETA && score >= beta) {
+                return beta;
+            }
+        }
+    }
 
     if (board_empty_bb(sinfo->root) == 0 || sinfo->root->pass_move_count >= 2) {
         if (eval_plain(sinfo->root) > 0)
-            return WIN_SCORE - sinfo->ply;
+            return WIN - sinfo->ply;
         else if (eval_plain(sinfo->root) < 0)
-            return -WIN_SCORE + sinfo->ply;
+            return -WIN + sinfo->ply;
 
         return DRAW;
     }
 
     if (depth == 0) {
-        return eval_pos(sinfo->root);
+        return eval(sinfo->root);
     }
 
     sinfo->nodes++;
@@ -98,17 +140,49 @@ int alphabeta(SearchInfo *sinfo, int alpha, int beta, int depth) {
 
     sort_moves(sinfo, mv_list);
 
+    int moves_searched = 0;
+    int score;
+    Move best_move = {.stone_pos = 65, .player = 2};
+    NodeType node_type = ALPHA;
+
     for (int i = 0; i < mv_list->size; i++) {
         board_apply_move(sinfo->root, mv_list->moves[i]);
         sinfo->ply++;
 
-        int score = -alphabeta(sinfo, -beta, -alpha, depth - 1);
+        // PV Search with LMR (Late Move Reduction)
+        if (moves_searched == 0) {
+            score = -alphabeta(sinfo, -beta, -alpha, depth - 1);
+        } else {
+            if (moves_searched >= FULL_DEPTH_MOVES && depth >= REDUCTION_LIMIT && !pv_node) {
+                // Search with reduced depth
+                score = -alphabeta(sinfo, -alpha - 1, -alpha, depth - 2);
+            } else {
+                // Ensure pv search
+                score = alpha + 1;
+            }
+
+            if (score > alpha) {
+                // Found PV node
+
+                // Try to prove that the move is bad
+                score = -alphabeta(sinfo, -alpha - 1, -alpha, depth - 1);
+
+                if (score > alpha && score < beta) {
+                    // If it fails redo the search with full window
+                    score = -alphabeta(sinfo, -beta, -alpha, depth - 1);
+                }
+            }
+        }
 
         board_undo_move(sinfo->root);
         sinfo->ply--;
+        moves_searched++;
 
         if (score > alpha) {
-            sinfo->history_mvs[mv_list->moves[i].code][mv_list->moves[i].player] += depth;
+            node_type = EXACT;
+            best_move = mv_list->moves[i];
+
+            sinfo->history_mvs[mv_list->moves[i].stone_pos][mv_list->moves[i].player] += depth;
 
             alpha = score;
 
@@ -120,6 +194,8 @@ int alphabeta(SearchInfo *sinfo, int alpha, int beta, int depth) {
             sinfo->pv_length[sinfo->ply] = sinfo->pv_length[sinfo->ply + 1];
 
             if (score >= beta) {
+                tt_place_entry(sinfo->root->hash, score_to_tt(BETA, sinfo->ply), beta, best_move, depth);
+
                 sinfo->killers_mvs[sinfo->ply][1] = sinfo->killers_mvs[sinfo->ply][0];
                 sinfo->killers_mvs[sinfo->ply][0] = mv_list->moves[i];
 
@@ -131,6 +207,8 @@ int alphabeta(SearchInfo *sinfo, int alpha, int beta, int depth) {
         }
     }
 
+    tt_place_entry(sinfo->root->hash, node_type, score_to_tt(alpha, sinfo->ply), best_move, depth);
+
     free(mv_list->moves);
     free(mv_list);
 
@@ -139,7 +217,7 @@ int alphabeta(SearchInfo *sinfo, int alpha, int beta, int depth) {
 
 Move engine_search(Board *board, int depth) {
     if (board_empty_bb(board) == 0 || board->pass_move_count >= 2) {
-        Move mv = {.code = PASS_MOVE_CODE, .player = board->turn};
+        Move mv = {.stone_pos = PASS_MOVE_CODE, .player = board->turn};
         return mv;
     }
 
@@ -159,10 +237,15 @@ Move engine_search(Board *board, int depth) {
         int score = alphabeta(&sinfo, alpha, beta, d);
 
         double s = ((double) (clock() - t)) / CLOCKS_PER_SEC;
-        printf("info score %d depth %d nodes %u in %lfs. %i n/s", score, d, sinfo.nodes, s,
-               (int32_t) round(sinfo.nodes / s));
+        printf("Score: %d. Search %u nodes in %lfs %i n/s. depth - %d", score, sinfo.nodes, s,
+               (int32_t) round(sinfo.nodes / s), d);
 
-        // print new line
+        printf("\nPV: ");
+        for (int count = 0; count < sinfo.pv_length[0]; count++) {
+            // print PV move
+            printf("%s ", MOVE_DISPLAY[sinfo.pv_table[0][count].stone_pos]);
+        }
+
         printf("\n");
     }
 
