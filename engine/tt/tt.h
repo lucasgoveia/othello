@@ -28,10 +28,10 @@ typedef struct {
     uint32_t size;
 } TT;
 
-void tt_init(uint16_t mb_size);
+TT *tt_init(uint16_t mb_size);
 
-void tt_place_entry(uint64_t key, NodeType node_type, int score, Move best_move, int depth);
+void tt_place_entry(TT *tt, uint64_t key, NodeType node_type, int score, Move best_move, int depth);
 
-TTEntry *tt_read_entry(uint64_t key);
+TTEntry *tt_read_entry(TT *tt, uint64_t key);
 
 #endif //OTHELLO_TT_H

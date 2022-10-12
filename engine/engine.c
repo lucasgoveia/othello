@@ -10,6 +10,7 @@
 
 typedef struct {
     Board *root;
+    TT *tt;
     int ply;
     uint32_t nodes;
     Move pv_table[MAX_PLY][MAX_PLY];
@@ -99,7 +100,7 @@ int alphabeta(SearchInfo *sinfo, int alpha, int beta, int depth) {
 
     sinfo->pv_length[sinfo->ply] = sinfo->ply;
 
-    TTEntry *tt_entry = tt_read_entry(sinfo->root->hash);
+    TTEntry *tt_entry = tt_read_entry(sinfo->tt, sinfo->root->hash);
 
     if (!pv_node && tt_entry->key == sinfo->root->hash && sinfo->ply > 0) {
         if (tt_entry->node_type != NO_BOUND && tt_entry->depth >= depth) {
@@ -194,7 +195,7 @@ int alphabeta(SearchInfo *sinfo, int alpha, int beta, int depth) {
             sinfo->pv_length[sinfo->ply] = sinfo->pv_length[sinfo->ply + 1];
 
             if (score >= beta) {
-                tt_place_entry(sinfo->root->hash, score_to_tt(BETA, sinfo->ply), beta, best_move, depth);
+                tt_place_entry(sinfo->tt, sinfo->root->hash, score_to_tt(BETA, sinfo->ply), beta, best_move, depth);
 
                 sinfo->killers_mvs[sinfo->ply][1] = sinfo->killers_mvs[sinfo->ply][0];
                 sinfo->killers_mvs[sinfo->ply][0] = mv_list->moves[i];
@@ -207,7 +208,7 @@ int alphabeta(SearchInfo *sinfo, int alpha, int beta, int depth) {
         }
     }
 
-    tt_place_entry(sinfo->root->hash, node_type, score_to_tt(alpha, sinfo->ply), best_move, depth);
+    tt_place_entry(sinfo->tt, sinfo->root->hash, node_type, score_to_tt(alpha, sinfo->ply), best_move, depth);
 
     free(mv_list->moves);
     free(mv_list);
@@ -215,7 +216,7 @@ int alphabeta(SearchInfo *sinfo, int alpha, int beta, int depth) {
     return alpha;
 }
 
-Move engine_search(Board *board, int depth) {
+Move engine_search(TT* tt, Board *board, int depth) {
     if (board_empty_bb(board) == 0 || board->pass_move_count >= 2) {
         Move mv = {.stone_pos = PASS_MOVE_CODE, .player = board->turn};
         return mv;
@@ -228,6 +229,7 @@ Move engine_search(Board *board, int depth) {
             .root = board,
             .ply = 0,
             .nodes = 0,
+            .tt = tt
     };
 
     clock_t t = clock();

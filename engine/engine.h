@@ -12,6 +12,6 @@
 #include "eval/eval.h"
 #include "tt/tt.h"
 
-Move engine_search(Board *board, int depth);
+Move engine_search(TT* tt, Board *board, int depth);
 
 #endif //OTHELLO_ENGINE_H

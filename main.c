@@ -15,8 +15,8 @@ void apply_random_mv(Board *board) {
     free(mv_list);
 }
 
-void apply_bot_move(Board *board) {
-    Move mv = engine_search(board, 12);
+void apply_bot_move(TT *tt, Board *board) {
+    Move mv = engine_search(tt, board, 12);
     board_apply_move(board, mv);
 }
 
@@ -46,17 +46,21 @@ void apply_user_move(Board *board) {
     free(mv_list);
 }
 
+
 int main() {
     tt_init(80);
     srand(time(NULL));
+
+    TT *tt = tt_init(80);
     Board *board = board_default();
 
     while (board->pass_move_count < 2) {
         board_print(board);
         if (board->turn == WHITE) {
-            apply_user_move(board);
-        } else {
-            apply_bot_move(board);
+            apply_random_mv(board);
+        }
+        else {
+            apply_bot_move(tt, board);
         }
     }
 
