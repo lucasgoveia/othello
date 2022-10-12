@@ -26,7 +26,7 @@ void enable_pv_scoring(SearchInfo *sinfo, MoveList *mv_list) {
 
     for (int i = 0; i < mv_list->size; i++) {
         Move mv = mv_list->moves[i];
-        if (sinfo->pv_table[sinfo->ply][0].stone_pos == mv.stone_pos) {
+        if (sinfo->pv_table[sinfo->ply][0] == mv) {
             sinfo->follow_pv = true;
             sinfo->score_pv = true;
         }
@@ -34,20 +34,20 @@ void enable_pv_scoring(SearchInfo *sinfo, MoveList *mv_list) {
 }
 
 int move_score(SearchInfo *sinfo, Move mv) {
-    if (sinfo->score_pv && sinfo->pv_table[sinfo->ply][0].stone_pos == mv.stone_pos) {
+    if (sinfo->score_pv && sinfo->pv_table[sinfo->ply][0] == mv) {
         sinfo->score_pv = false;
         return 20000;
     }
 
-    if (sinfo->killers_mvs[sinfo->ply][0].stone_pos == mv.stone_pos) {
+    if (sinfo->killers_mvs[sinfo->ply][0] == mv) {
         return 9000;
     }
 
-    if (sinfo->killers_mvs[sinfo->ply][1].stone_pos == mv.stone_pos) {
+    if (sinfo->killers_mvs[sinfo->ply][1] == mv) {
         return 8000;
     }
 
-    return sinfo->history_mvs[mv.stone_pos][mv.player];
+    return sinfo->history_mvs[mv][sinfo->root->turn];
 }
 
 void sort_moves(SearchInfo *sinfo, MoveList *mv_list) {
@@ -143,7 +143,7 @@ int alphabeta(SearchInfo *sinfo, int alpha, int beta, int depth) {
 
     int moves_searched = 0;
     int score;
-    Move best_move = {.stone_pos = 65, .player = 2};
+    Move best_move = ILLEGAL_MOVE;
     NodeType node_type = ALPHA;
 
     for (int i = 0; i < mv_list->size; i++) {
@@ -182,8 +182,8 @@ int alphabeta(SearchInfo *sinfo, int alpha, int beta, int depth) {
         if (score > alpha) {
             node_type = EXACT;
             best_move = mv_list->moves[i];
-
-            sinfo->history_mvs[mv_list->moves[i].stone_pos][mv_list->moves[i].player] += depth;
+            
+            sinfo->history_mvs[mv_list->moves[i]][sinfo->root->turn] += depth;
 
             alpha = score;
 
@@ -218,7 +218,7 @@ int alphabeta(SearchInfo *sinfo, int alpha, int beta, int depth) {
 
 Move engine_search(TT* tt, Board *board, int depth) {
     if (board_empty_bb(board) == 0 || board->pass_move_count >= 2) {
-        Move mv = {.stone_pos = PASS_MOVE_CODE, .player = board->turn};
+        Move mv = PASS_MOVE;
         return mv;
     }
 
@@ -245,7 +245,7 @@ Move engine_search(TT* tt, Board *board, int depth) {
         printf("\nPV: ");
         for (int count = 0; count < sinfo.pv_length[0]; count++) {
             // print PV move
-            printf("%s ", MOVE_DISPLAY[sinfo.pv_table[0][count].stone_pos]);
+            printf("%s ", MOVE_DISPLAY[sinfo.pv_table[0][count]]);
         }
 
         printf("\n");

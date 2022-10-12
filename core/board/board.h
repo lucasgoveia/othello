@@ -15,7 +15,8 @@
 #define TOP_BOTTOM_MASK 0x00ffffffffffff00ULL
 #define CORNER_MASK (LEFT_RIGHT_MAKS & TOP_BOTTOM_MASK)
 
-#define PASS_MOVE_CODE 64
+#define PASS_MOVE 64
+#define ILLEGAL_MOVE 65
 
 typedef struct board {
     Bitboard bbs[2];
@@ -36,10 +37,7 @@ typedef struct {
     int offset;
 } DeltaInfo;
 
-typedef struct {
-    uint8_t stone_pos;
-    Player player;
-} Move;
+typedef uint8_t Move;
 
 typedef struct {
     Move *moves;

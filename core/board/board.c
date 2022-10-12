@@ -144,15 +144,14 @@ MoveList *board_legal_moves(Board *board) {
 
     int move_index = 0;
     while (moves_bb != 0) {
-        uint8_t sq = bitboard_pop_lsb(&moves_bb);
-        Move move = {.stone_pos = sq, .player = board->turn};
+        Move move = bitboard_pop_lsb(&moves_bb);
         moves[move_index] = move;
 
         move_index++;
     }
 
     if (move_index == 0) {
-        Move move = {.stone_pos = PASS_MOVE_CODE, .player = board->turn};
+        Move move = PASS_MOVE;
         moves = (Move *) malloc(sizeof(Move));
         moves[0] = move;
         movecnt++;
@@ -187,7 +186,7 @@ Board *board_copy(Board *board) {
 
 
 void board_apply_move(Board *board, Move mv) {
-    if (mv.stone_pos == PASS_MOVE_CODE) {
+    if (mv == PASS_MOVE) {
         Board *copy = board_copy(board);
 
         board->prev = copy;
@@ -202,7 +201,7 @@ void board_apply_move(Board *board, Move mv) {
     Bitboard us = board_us_bb(board);
     Bitboard them = board_them_bb(board);
 
-    Bitboard bitmove = 1ULL << mv.stone_pos;
+    Bitboard bitmove = 1ULL << mv;
     Bitboard flipped_stones = 0ULL;
 
     for (int i = 0; i < 8; i++) {
@@ -229,8 +228,8 @@ void board_apply_move(Board *board, Move mv) {
                         : them;
 
     board->hash ^= PLAYER_HASH;
-    board->hash ^= get_pos_hash(mv.stone_pos, (SquareOccupancyType) mv.player)
-            ^ get_pos_hash(mv.stone_pos, SQ_OCC_EMPTY);
+    board->hash ^= get_pos_hash(mv, (SquareOccupancyType) prev->turn)
+            ^ get_pos_hash(mv, SQ_OCC_EMPTY);
 
     while (flipped_stones) {
         uint8_t pos = bitboard_pop_lsb(&flipped_stones);

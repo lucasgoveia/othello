@@ -22,10 +22,10 @@ void apply_bot_move(TT *tt, Board *board) {
 
 void apply_user_move(Board *board) {
     MoveList *mv_list = board_legal_moves(board);
-    Move mv = {.stone_pos = 65};
+    Move mv = ILLEGAL_MOVE;
 
     for(int i=0; i<mv_list->size; i++)
-        printf("%s ", MOVE_DISPLAY[mv_list->moves[i].stone_pos]);
+        printf("%s ", MOVE_DISPLAY[mv_list->moves[i]]);
 
     char move[5];
 
@@ -34,12 +34,12 @@ void apply_user_move(Board *board) {
         scanf("%s", move);
 
         for(int i=0; i<mv_list->size; i++) {
-            if (strcmp(move, MOVE_DISPLAY[mv_list->moves[i].stone_pos]) == 0) {
+            if (strcmp(move, MOVE_DISPLAY[mv_list->moves[i]]) == 0) {
                 mv = mv_list->moves[i];
                 break;
             }
         }
-    } while (mv.stone_pos == 65);
+    } while (mv == ILLEGAL_MOVE);
 
     board_apply_move(board, mv);
     free(mv_list->moves);
