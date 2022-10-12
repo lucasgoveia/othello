@@ -46,9 +46,9 @@ typedef struct {
     uint8_t size;
 } MoveList;
 
-const DeltaInfo DELTAS[8];
+extern const DeltaInfo DELTAS[8];
 
-const char *MOVE_DISPLAY[65];
+extern const char *MOVE_DISPLAY[65];
 
 Board *board_default();
 
@@ -66,7 +66,7 @@ void board_undo_move(Board *board);
 
 Board *board_copy(Board *board);
 
-const uint64_t RAND_HASHES[192];
-const uint64_t PLAYER_HASH;
+extern const uint64_t RAND_HASHES[192];
+extern const uint64_t PLAYER_HASH;
 
 #endif //OTHELLO_BOARD_H

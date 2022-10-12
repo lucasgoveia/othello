@@ -10,7 +10,7 @@ typedef enum {
     BLACK
 } Player;
 
-const char PLAYER_DISPLAY[2];
+extern const char PLAYER_DISPLAY[2];
 
 Player player_other(Player player);
 
