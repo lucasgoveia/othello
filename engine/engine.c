@@ -238,17 +238,17 @@ Move engine_search(TT* tt, Board *board, int depth) {
         sinfo.follow_pv = true;
         int score = alphabeta(&sinfo, alpha, beta, d);
 
-        double s = ((double) (clock() - t)) / CLOCKS_PER_SEC;
-        printf("Score: %d. Search %u nodes in %lfs %i n/s. depth - %d", score, sinfo.nodes, s,
-               (int32_t) round(sinfo.nodes / s), d);
+        // double s = ((double) (clock() - t)) / CLOCKS_PER_SEC;
+        // printf("Score: %d. Search %u nodes in %lfs %i n/s. depth - %d", score, sinfo.nodes, s,
+        //        (int32_t) round(sinfo.nodes / s), d);
 
-        printf("\nPV: ");
-        for (int count = 0; count < sinfo.pv_length[0]; count++) {
-            // print PV move
-            printf("%s ", MOVE_DISPLAY[sinfo.pv_table[0][count]]);
-        }
+        // printf("\nPV: ");
+        // for (int count = 0; count < sinfo.pv_length[0]; count++) {
+        //     // print PV move
+        //     printf("%s ", MOVE_DISPLAY[sinfo.pv_table[0][count]]);
+        // }
 
-        printf("\n");
+        // printf("\n");
     }
 
     return sinfo.pv_table[0][0];

@@ -21,4 +21,7 @@ uint8_t bitboard_pop_lsb(Bitboard *bb);
 
 uint8_t bitboard_popcnt(Bitboard bb);
 
+Bitboard bitboard_flip_vert(Bitboard bb);
+Bitboard bitboard_flip_horinz(Bitboard bb);
+
 #endif //OTHELLO_BITBOARD_H

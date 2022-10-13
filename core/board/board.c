@@ -42,6 +42,7 @@ Board *board_default() {
     board->bbs[BLACK] = black;
     board->turn = BLACK;
     board->pass_move_count = 0;
+    board->moves_count = 0;
     board->prev = NULL;
     board->hash = 0ULL;
 
@@ -177,6 +178,7 @@ Board *board_copy(Board *board) {
     new_board->prev = board->prev;
     new_board->hash = board->hash;
     new_board->turn = board->turn;
+    new_board->moves_count = board->moves_count;
     new_board->bbs[WHITE] = board->bbs[WHITE];
     new_board->bbs[BLACK] = board->bbs[BLACK];
     new_board->pass_move_count = board->pass_move_count;
@@ -191,6 +193,7 @@ void board_apply_move(Board *board, Move mv) {
 
         board->prev = copy;
         board->hash ^= PLAYER_HASH;
+        board->moves_count = copy->moves_count + 1;
         board->turn = player_other(board->turn);
         board->bbs[WHITE] = board->bbs[WHITE];
         board->bbs[BLACK] = board->bbs[BLACK];
@@ -219,6 +222,7 @@ void board_apply_move(Board *board, Move mv) {
 
     board->prev = prev;
     board->pass_move_count = 0;
+    board->moves_count = prev->moves_count + 1;
     board->turn = player_other(prev->turn);
     board->bbs[WHITE] = prev->turn == WHITE
                         ? us
@@ -242,9 +246,20 @@ void board_undo_move(Board *board) {
     board->bbs[0] = board->prev->bbs[0];
     board->bbs[1] = board->prev->bbs[1];
     board->turn = board->prev->turn;
+    board->moves_count = board->prev->moves_count;
     board->pass_move_count = board->prev->pass_move_count;
     board->hash = board->prev->hash;
     Board *prev = board->prev;
     board->prev = prev->prev;
     free(prev);
+}
+
+void board_free(Board *board) {
+    Board *current = board;
+    while (current != NULL)
+    {
+        Board *prev = current->prev;
+        free(current);
+        current = prev;
+    }
 }

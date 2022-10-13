@@ -57,3 +57,22 @@ uint8_t bitboard_popcnt(Bitboard bb) {
     }
     return count;
 }
+
+Bitboard bitboard_flip_vert(Bitboard bb) {
+    const Bitboard k1 = 0x00FF00FF00FF00FFULL;
+    const Bitboard k2 = 0x0000FFFF0000FFFFULL;
+    bb = ((bb >>  8) & k1) | ((bb & k1) <<  8);
+    bb = ((bb >> 16) & k2) | ((bb & k2) << 16);
+    bb = ( bb >> 32)       | ( bb       << 32);
+    return bb;
+}
+
+Bitboard bitboard_flip_horinz(Bitboard bb) {
+    const Bitboard k1 = 0x5555555555555555ULL;
+    const Bitboard k2 = 0x3333333333333333ULL;
+    const Bitboard k4 = 0x0f0f0f0f0f0f0f0fULL;
+    bb = ((bb >> 1) & k1) | ((bb & k1) << 1);
+    bb = ((bb >> 2) & k2) | ((bb & k2) << 2);
+    bb = ((bb >> 4) & k4) | ((bb & k4) << 4);
+    return bb;
+}

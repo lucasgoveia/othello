@@ -22,6 +22,7 @@ typedef struct board {
     Bitboard bbs[2];
     Player turn;
     int pass_move_count;
+    int moves_count;
     uint64_t hash;
     struct board *prev;
 } Board;
@@ -63,6 +64,8 @@ void board_apply_move(Board *board, Move mv);
 void board_undo_move(Board *board);
 
 Board *board_copy(Board *board);
+
+void board_free(Board *board);
 
 extern const uint64_t RAND_HASHES[192];
 extern const uint64_t PLAYER_HASH;
